@@ -1,75 +1,123 @@
 #include "binary_trees.h"
 
-/**
- * depth - returns the depth of a node
- * @node: node to be checked
- * Return: the depth of the node
- */
-size_t depth(const binary_tree_t *node)
-{
-	size_t node_height = 0;
-	const binary_tree_t *temp;
+levelorder_queue_t *create_node(binary_tree_t *node);
+void free_queue(levelorder_queue_t *head);
+void pint_push(binary_tree_t *node, levelorder_queue_t *head,
+		levelorder_queue_t **tail, void (*func)(int));
+void pop(levelorder_queue_t **head);
+void binary_tree_levelorder(const binary_tree_t *tree, void (*func)(int));
 
-	temp = node;
-	while (temp->parent)
+/**
+ * create_node - Creates a new levelorder_queue_t node.
+ * @node: The binary tree node for the new node to contain.
+ *
+ * Return: If an error occurs, NULL.
+ *         Otherwise, a pointer to the new node.
+ */
+levelorder_queue_t *create_node(binary_tree_t *node)
+{
+	levelorder_queue_t *new;
+
+	new = malloc(sizeof(levelorder_queue_t));
+	if (new == NULL)
+		return (NULL);
+
+	new->node = node;
+	new->next = NULL;
+
+	return (new);
+}
+
+/**
+ * free_queue - Frees a levelorder_queue_t queue.
+ * @head: A pointer to the head of the queue.
+ */
+void free_queue(levelorder_queue_t *head)
+{
+	levelorder_queue_t *tmp;
+
+	while (head != NULL)
 	{
-		temp = temp->parent;
-		node_height++;
+		tmp = head->next;
+		free(head);
+		head = tmp;
 	}
-	return (node_height);
 }
 
 /**
- * tree_height - returns the height of a tree
- * @tree: node to the root of the tree
- * Return: height of the tree
- */
-size_t tree_height(const binary_tree_t *tree)
-{
-	size_t left = 0, right = 0;
-
-	if (!tree)
-		return (0);
-	left = tree_height(tree->left);
-	right = tree_height(tree->right);
-	if (!tree->left && !tree->right)
-		return (0);
-	return ((left > right ? left + 1 : right + 1));
-}
-/**
- * binary_tree_in_order_h - traverses the tree in order; prints in level order
+ * pint_push - Runs a function on a given binary tree node and
+ *             pushes its children into a levelorder_queue_t queue.
+ * @node: The binary tree node to print and push.
+ * @head: A double pointer to the head of the queue.
+ * @tail: A double pointer to the tail of the queue.
+ * @func: A pointer to the function to call on @node.
  *
- * @tree: node of the tree
- * @func: function to be called for printing
- * @n_height: level order flag
- * Return: void
+ * Description: Upon malloc failure, exits with a status code of 1.
  */
-
-void binary_tree_in_order_h(const binary_tree_t *tree, void (*func)(int),
-size_t n_height)
+void pint_push(binary_tree_t *node, levelorder_queue_t *head,
+		levelorder_queue_t **tail, void (*func)(int))
 {
-	if (tree->left)
-		binary_tree_in_order_h(tree->left, func, n_height);
-	if (depth(tree) == n_height)
-		func(tree->n);
-	if (tree->right)
-		binary_tree_in_order_h(tree->right, func, n_height);
+	levelorder_queue_t *new;
+
+	func(node->n);
+	if (node->left != NULL)
+	{
+		new = create_node(node->left);
+		if (new == NULL)
+		{
+			free_queue(head);
+			exit(1);
+		}
+		(*tail)->next = new;
+		*tail = new;
+	}
+	if (node->right != NULL)
+	{
+		new = create_node(node->right);
+		if (new == NULL)
+		{
+			free_queue(head);
+			exit(1);
+		}
+		(*tail)->next = new;
+		*tail = new;
+	}
 }
+
 /**
- * binary_tree_levelorder - returns a pointer to the uncle of a node.
- *
- * @tree: node.
- * @func: function to be called when printing
- * Return: pointer to the uncle node
+ * pop - Pops the head of a levelorder_queue_t queue.
+ * @head: A double pointer to the head of the queue.
+ */
+void pop(levelorder_queue_t **head)
+{
+	levelorder_queue_t *tmp;
+
+	tmp = (*head)->next;
+	free(*head);
+	*head = tmp;
+}
+
+/**
+ * binary_tree_levelorder - Traverses a binary tree using
+ *                          level-order traversal.
+ * @tree: A pointer to the root node of the tree to traverse.
+ * @func: A pointer to a function to call for each node.
  */
 void binary_tree_levelorder(const binary_tree_t *tree, void (*func)(int))
 {
-	size_t height_tree, i;
+	levelorder_queue_t *head, *tail;
 
-	if (!tree || !func)
+	if (tree == NULL || func == NULL)
 		return;
 
-	height_tree = tree_height(tree);
-	for (i = 0; i <= height_tree; i++)
-		binary_tree_in_order_h(tree, func, i);
+	head = tail = create_node((binary_tree_t *)tree);
+	if (head == NULL)
+		return;
+
+	while (head != NULL)
+	{
+		pint_push(head->node, head, &tail, func);
+		pop(&head);
+	}
 }
+
