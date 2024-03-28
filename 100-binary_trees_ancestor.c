@@ -1,29 +1,26 @@
 #include "binary_trees.h"
 
 /**
- * binary_trees_ancestor - returns a pinter to the sibling of a node.
- * @first: First.
- * @second: Second.
- * Return: pointer to the sibling node
+ * binary_trees_ancestor - Finds the lowest common ancestor of two nodes.
+ * @first: Pointer to the first node.
+ * @second: Pointer to the second node.
+ *
+ * Return: If no common ancestors return NULL, else return common ancestor.
  */
-
-binary_tree_t *binary_trees_ancestor(const binary_tree_t *first, const
-binary_tree_t *second)
+binary_tree_t *binary_trees_ancestor(const binary_tree_t *first,
+		const binary_tree_t *second)
 {
-	const binary_tree_t *temp1, *temp2;
+	binary_tree_t *mom, *pop;
 
-	temp1 = first;
+	if (!first || !second)
+		return (NULL);
+	if (first == second)
+		return ((binary_tree_t *)first);
 
-	while (temp1)
-	{
-		temp2 = second;
-		while (temp2)
-		{
-			if (temp2 == temp1)
-				return ((binary_tree_t *)temp1);
-			temp2 = temp2->parent;
-		}
-		temp1 = temp1->parent;
-	}
-	return (NULL);
+	mom = first->parent, pop = second->parent;
+	if (first == pop || !mom || (!mom->parent && pop))
+		return (binary_trees_ancestor(first, pop));
+	else if (mom == second || !pop || (!pop->parent && mom))
+		return (binary_trees_ancestor(mom, second));
+	return (binary_trees_ancestor(mom, pop));
 }
